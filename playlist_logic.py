@@ -116,18 +116,32 @@ def compute_playlist_stats(playlists: PlaylistMap) -> Dict[str, object]:
     chill = playlists.get("Chill", [])
     mixed = playlists.get("Mixed", [])
 
-    total = len(hype)
-    hype_ratio = len(hype) / total if total > 0 else 0.0
+    # total should be all songs (unique-safe)
+    def song_key(s: Song) -> Tuple[str, str, str]:
+        return (
+            str(s.get("title", "")),
+            str(s.get("artist", "")),
+            str(s.get("genre", "")),
+        )
 
+    unique_map: Dict[Tuple[str, str, str], Song] = {}
+    for s in all_songs:
+        unique_map[song_key(s)] = s
+    unique_songs = list(unique_map.values())
+
+    total = len(unique_songs)
+    hype_ratio = (len(hype) / total) if total > 0 else 0.0
+
+    # average energy across all songs (unique-safe)
     avg_energy = 0.0
-    if all_songs:
-        total_energy = sum(song.get("energy", 0) for song in hype)
-        avg_energy = total_energy / len(all_songs)
+    if unique_songs:
+        total_energy = sum(int(song.get("energy", 0)) for song in unique_songs)
+        avg_energy = total_energy / len(unique_songs)
 
-    top_artist, top_count = most_common_artist(all_songs)
+    top_artist, top_count = most_common_artist(unique_songs)
 
     return {
-        "total_songs": len(all_songs),
+        "total_songs": total,
         "hype_count": len(hype),
         "chill_count": len(chill),
         "mixed_count": len(mixed),
