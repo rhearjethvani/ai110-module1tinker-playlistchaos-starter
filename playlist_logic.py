@@ -194,6 +194,9 @@ def random_choice_or_none(songs: List[Song]) -> Optional[Song]:
     """Return a random song or None."""
     import random
 
+    # random.choice([]) raises IndexError; return None for empty input
+    if not songs:
+        return None
     return random.choice(songs)
 
 
